@@ -95,6 +95,23 @@ return {
 				yaml = { "yamllint" },
 			}
 
+			-- 只保留可执行文件真实存在的 linter（跨机器通用）：
+			-- NixOS 机器由 Nix 装工具，个别小众工具（shuck/jsonlint/vint）可能暂缺，
+			-- 缺失时静默跳过而不是每次触发检查都弹警告；装上后自动恢复。
+			local lint = require("lint")
+			for ft, names in pairs(lint.linters_by_ft) do
+				local available = {}
+				for _, name in ipairs(names) do
+					local cmd = (lint.linters[name] or {}).cmd
+					-- cmd 可能是表（取第一个）或带 ~ 的路径，统一展开后检查
+					local bin = type(cmd) == "table" and cmd[1] or cmd
+					if bin and vim.fn.executable(vim.fn.expand(bin)) == 1 then
+						table.insert(available, name)
+					end
+				end
+				lint.linters_by_ft[ft] = available
+			end
+
 			-- 自动命令：打开/保存/离开插入模式时检查，保证编辑时就能看到提示
 			vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
 				callback = function()
