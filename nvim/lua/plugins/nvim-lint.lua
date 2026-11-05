@@ -1,4 +1,9 @@
 -- 句法检查插件
+-- NixOS 上 Mason 装的预编译二进制跑不起来，linter 改由 Nix 安装进 PATH，
+-- 检测到 NixOS 就不让 mason-nvim-lint 自动安装（nvim-lint 本身不受影响）。
+-- /etc/NIXOS 是 NixOS 的标志文件。
+local is_nixos = vim.uv.fs_stat("/etc/NIXOS") ~= nil
+
 return {
 	{
 		"mfussenegger/nvim-lint",
@@ -109,7 +114,7 @@ return {
 		-- mason 和 nvim-lint 都有自己的顶层 spec，无需声明依赖
 		opts = {
 			-- 安装你想要的 Linter
-			ensure_installed = {
+			ensure_installed = is_nixos and {} or {
 				"luacheck",
 				"vale",
 				"bandit",
