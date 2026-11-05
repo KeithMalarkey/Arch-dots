@@ -128,10 +128,14 @@ return {
 	},
 	{
 		"rshkarin/mason-nvim-lint",
+		-- NixOS 上整个插件不加载：Mason 的预编译二进制跑不起来，
+		-- linter 由 Nix 提供；缺失的工具由 nvim-lint 的可执行过滤自动跳过。
+		-- （不加 cond 的话，它的自动安装会反复尝试 Mason install 并报错）
+		cond = not is_nixos,
 		-- mason 和 nvim-lint 都有自己的顶层 spec，无需声明依赖
 		opts = {
 			-- 安装你想要的 Linter
-			ensure_installed = is_nixos and {} or {
+			ensure_installed = {
 				"luacheck",
 				"vale",
 				"bandit",
