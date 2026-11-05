@@ -1,0 +1,34 @@
+-- 主题设置
+return {
+	{
+		"catppuccin/nvim",
+		name = "catppuccin",
+		-- 必须在启动时加载（priority=1000 + config）并由 config 主动应用配色。
+		-- 原因：Neovim 0.11+ 自带 runtime/colors/catppuccin.vim，
+		-- 直接写 :colorscheme catppuccin 会命中「内置」那份，
+		-- 插件的 opts（flavour / transparent_background）根本不会执行。
+		-- lazy.nvim 的 ColorSchemePre 处理器只会把插件加进 rtp 并应用它的
+		-- colors 文件，不会调用 setup(opts)，所以不能靠 lazy = true。
+		priority = 1000,
+		opts = { flavour = "mocha", transparent_background = true },
+		config = function(_, opts)
+			require("catppuccin").setup(opts)
+			vim.cmd.colorscheme("catppuccin-mocha")
+		end,
+	},
+	{
+		"ellisonleao/gruvbox.nvim",
+		-- priority=1000 已让它启动时加载，原来的 event = "VeryLazy" 在此无效，已删除
+		priority = 1000,
+		config = true,
+		opts = { transparent_mode = true },
+	},
+	{
+		"mrpbennett/vault",
+		priority = 1000,
+		lazy = false,
+		config = function()
+			vim.cmd.colorscheme("vault")
+		end,
+	},
+}

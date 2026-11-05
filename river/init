@@ -1,0 +1,190 @@
+#!/bin/sh
+# ~/.config/river/init
+
+export XDG_CURRENT_DESKTOP=river
+export XDG_SESSION_DESKTOP=river
+export XDG_SESSION_TYPE=wayland
+export PATH="$HOME/.local/bin:$PATH"
+# river 桌面用 bash（niri 那边用 zsh，靠 niri 的 environment{} 设置）
+export SHELL=/usr/bin/bash
+
+# ---------------- 输入法 ----------------
+# river 的 spawn 动作由 river 进程执行，不继承 init 的环境；
+# 这里 export 只影响 init 直接启动的进程，按键启动的程序仍需 ime-run。
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+# SDL/GLFW 在 Wayland 下走 text-input，不再设置；
+# 若某个 GLFW 程序走 XWayland 且需要输入法，再单独设 GLFW_IM_MODULE=ibus。
+
+# 让 D-Bus/systemd 激活的应用也拿到 Wayland/桌面环境变量
+dbus-update-activation-environment --systemd \
+    PATH WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
+    GTK_IM_MODULE QT_IM_MODULE XMODIFIERS
+
+# ---------------- 桌面进程 ----------------
+fcitx5 -r -d & # 输入法（-r 替换已有实例，-d 后台化）
+# dam 必须从 stdin 读状态文本；直接 `dam &` 会因 stdin 立刻 EOF 而崩溃
+(~/.local/bin/dam-status | ~/.local/bin/dam) & # 状态栏（无 Noctalia）
+# 壁纸守护进程：没有它 `awww img` 会报 socket 不存在（Super+B 切壁纸靠它）
+awww-daemon &
+# foot 以 server 模式常驻：只起服务、不开窗口，
+# 之后用 footclient --server-socket=... 开新终端（共享字体/字形缓存，启动更快）
+foot --server="$XDG_RUNTIME_DIR/foot-river.sock" &
+swayidle -w \
+    timeout 600 'hyprlock' \
+    before-sleep 'hyprlock & sleep 1' & # 10 分钟自动锁
+
+# 剪切板历史：cliphist 没有 daemon 子命令，需要 wl-paste --watch 喂数据
+wl-paste --type text --watch cliphist store &
+wl-paste --type image --watch cliphist store &
+/usr/lib/polkit-kde-authentication-agent-1 &
+mako &
+clash-verge &
+
+# ---------------- 按键映射 ----------------
+# cheatsheet
+RIVER_HELPERS="$HOME/.local/bin/river-helpers"
+
+# 程序启动
+# foot 走 server 模式：footclient 连到 init 里起的那个 server，
+# -a foot 是把 app-id 固定成 foot（server 模式默认是 footclient）
+riverctl map normal Super T spawn \
+    '$HOME/.local/bin/ime-run footclient --server-socket="$XDG_RUNTIME_DIR/foot-river.sock" -a foot'
+riverctl map normal Super Return spawn \
+    '$HOME/.local/bin/ime-run footclient --server-socket="$XDG_RUNTIME_DIR/foot-river.sock" -a foot -- bash -c "tmux set-option -g default-shell /usr/bin/bash; tmux attach -t main 2>/dev/null || tmux new -s main"'
+riverctl map normal Super E spawn '$HOME/.local/bin/ime-run nautilus'
+riverctl map normal Super W spawn '$HOME/.local/bin/ime-run firefox'
+riverctl map normal Super R spawn '$HOME/.local/bin/ime-run fuzzel'
+riverctl map normal Super P spawn 'hyprpicker -a'
+riverctl map normal Super+Shift S spawn '$HOME/.local/bin/ime-run shotori'
+riverctl map normal Super+Alt L spawn 'hyprlock'
+riverctl map normal Super+Shift L spawn 'hyprlock & sleep 1; systemctl suspend'
+# niri 的 Mod+Slash 快捷键提示 / Mod+B 壁纸 / Mod+H 通知历史
+# 用 ime-run 包一层：bemenu 里的中文输入需要 fcitx5 环境
+riverctl map normal Super slash spawn "$HOME/.local/bin/ime-run $RIVER_HELPERS keys"
+riverctl map normal Super B spawn "$HOME/.local/bin/ime-run $RIVER_HELPERS wall"
+riverctl map normal Super H spawn "$HOME/.local/bin/ime-run $RIVER_HELPERS notif"
+# niri 的 Mod+Shift+P 关屏；river 无 DPMS 命令，靠 wlopm
+# riverctl map normal Super+Shift P spawn "$RIVER_HELPERS dpms"
+# niri 的 Super+Alt+S 切换屏幕阅读器（orca 尚未安装时按了只会报错）
+riverctl map normal Super+Alt S spawn 'pkill orca 2>/dev/null || exec orca'
+
+# 窗口
+riverctl map normal Super Q close
+riverctl map normal Super+Alt R exit
+# riverctl map normal Control+Alt Delete exit
+riverctl map normal Super F toggle-fullscreen
+riverctl map normal Super V toggle-float
+# riverctl map normal Super Space toggle-float # river 原有别名
+# niri 的 Mod+D 最大化列 → river 的 zoom（把窗口顶到主区域）
+# riverctl map normal Super D zoom
+# niri 的 Mod+M 最大化到屏幕边缘 → river 只有 fullscreen，语义近似
+# riverctl map normal Super M toggle-fullscreen
+# niri 的 Mod+Ctrl+F 铺满可用宽度 → rivertile 的 ratio 上限
+riverctl map normal Super+Control F send-layout-cmd rivertile "main-ratio 0.9"
+# niri 的 Mod+Shift+V 在浮动/平铺间切焦点 → river 只能回到平铺窗口
+riverctl map normal Super+Shift V focus-view -skip-floating next
+
+# 焦点：niri 用方向键；J/K 作为 river 原有别名保留
+riverctl map normal Super Left focus-view left
+riverctl map normal Super Right focus-view right
+riverctl map normal Super Up focus-view up
+riverctl map normal Super Down focus-view down
+
+# 交换/移动：niri 用 Ctrl+方向键
+riverctl map normal Super+Control Left swap left
+riverctl map normal Super+Control Right swap right
+riverctl map normal Super+Control Up swap up
+riverctl map normal Super+Control Down swap down
+
+# 布局：niri 的列宽调整近似为 rivertile 的 main-ratio（10% 一步）
+# keysym 用 xkb 名称；river 大小写不敏感（写 Minus 也能用），这里统一小写。
+# 写错的 keysym 会被 riverctl 直接拒绝，例如 `invalid keysym '...'`。
+riverctl map normal Super minus send-layout-cmd rivertile "main-ratio -0.1"
+riverctl map normal Super equal send-layout-cmd rivertile "main-ratio +0.1"
+riverctl map normal Super+Control H send-layout-cmd rivertile "main-ratio -0.1"
+riverctl map normal Super+Control L send-layout-cmd rivertile "main-ratio +0.1"
+# niri 的 Mod+Shift+R 循环列宽预设
+riverctl map normal Super+Shift R spawn "$RIVER_HELPERS preset back"
+# niri 的 Mod+Ctrl+R 重置宽度 → rivertile 回到 0.5
+riverctl map normal Super+Control R spawn "$RIVER_HELPERS preset reset"
+# river 特有：主区域窗口数量（避开 Super+Shift+L 的挂起）
+riverctl map normal Super+Control+Shift H send-layout-cmd rivertile "main-count +1"
+riverctl map normal Super+Control+Shift L send-layout-cmd rivertile "main-count -1"
+
+# 标签（近似 niri workspace）
+# 走 river-helpers：river 查不到当前标签，脚本把最近聚焦的标签号记在
+# $XDG_RUNTIME_DIR/river-helpers/tag，才能实现「下一个/上一个标签」。
+for i in 1 2 3 4 5 6 7 8 9; do
+    riverctl map normal Super $i spawn "$RIVER_HELPERS tag goto $i"
+    riverctl map normal Super+Alt $i spawn "$RIVER_HELPERS send goto $i"
+    riverctl map normal Super+Shift $i spawn "$RIVER_HELPERS send goto $i" # river 原有别名
+done
+
+# niri 的 Mod+U/I 滚动工作区
+riverctl map normal Super U spawn "$RIVER_HELPERS tag next"
+riverctl map normal Super I spawn "$RIVER_HELPERS tag prev"
+# niri 的 Mod+Alt+U/I 把窗口送到上/下一个工作区
+riverctl map normal Super+Alt U spawn "$RIVER_HELPERS send next"
+riverctl map normal Super+Alt I spawn "$RIVER_HELPERS send prev"
+
+# 截图 / 剪贴板
+riverctl map normal Alt A spawn 'grim -g "$(slurp)" - | wl-copy'
+riverctl map normal Super+Shift A spawn \
+    'f=$HOME/Pictures/screenshots/$(date +%Y%m%d-%H%M%S).png; grim -g "$(slurp)" "$f" && sleep 0.1 && wl-copy < "$f"'
+riverctl map normal Super+Alt H spawn 'cliphist list | bemenu -i -l 10 --fixed-height -p "Clipboard" | cliphist decode | wl-copy'
+# niri 的 screenshot UI / screenshot-screen
+riverctl map normal None Print spawn '$HOME/.local/bin/ime-run shotori gui'
+riverctl map normal Control Print spawn 'shotori full -p "$HOME/Pictures/screenshots"'
+# niri 的 Alt+Print（截取当前窗口）在 river 没有窗口几何接口，未映射
+
+# 媒体键（普通 + 锁屏下都生效）
+for mode in normal locked; do
+    riverctl map $mode None XF86AudioRaiseVolume spawn 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0'
+    riverctl map $mode None XF86AudioLowerVolume spawn 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-'
+    riverctl map $mode None XF86AudioMute spawn 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle'
+    riverctl map $mode None XF86AudioMicMute spawn 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle'
+    riverctl map $mode None XF86AudioPlay spawn 'playerctl play-pause'
+    riverctl map $mode None XF86AudioStop spawn 'playerctl stop'
+    riverctl map $mode None XF86AudioNext spawn 'playerctl next'
+    riverctl map $mode None XF86AudioPrev spawn 'playerctl previous'
+    riverctl map $mode None XF86MonBrightnessUp spawn 'brightnessctl --class=backlight set +10%'
+    riverctl map $mode None XF86MonBrightnessDown spawn 'brightnessctl --class=backlight set 10%-'
+done
+
+# 鼠标（river 需要显式配置）
+riverctl map-pointer normal Super BTN_LEFT move-view
+riverctl map-pointer normal Super BTN_RIGHT resize-view
+riverctl map-pointer normal Super BTN_MIDDLE toggle-float
+
+# ---------------- 浮动窗口 ----------------
+for app in pavucontrol blueman-manager nm-connection-editor; do
+    riverctl rule-add -app-id "$app" float
+done
+
+# ---------------- 输入设备 ----------------
+# 对齐 niri 的 input.touchpad：tap / natural-scroll / accel-speed 0.2。
+# 设备名用 glob 匹配，避免写死型号；实际名称见 `riverctl list-inputs`。
+# 注意 river 只把 pointer-gestures 协议转发给客户端，
+# 自身没有三指/四指手势的绑定接口（riverctl 没有 gesture 命令）。
+riverctl input '*Touchpad*' natural-scroll enabled
+riverctl input '*Touchpad*' tap enabled
+riverctl input '*Touchpad*' pointer-accel 0.2
+riverctl input '*Touchpad*' scroll-method two-finger
+
+# ---------------- 外观 ----------------
+riverctl background-color 0x0a0a00
+riverctl border-width 2
+riverctl border-color-focused 0x88b04b
+riverctl border-color-unfocused 0x2a3a1a
+riverctl set-repeat 50 300
+riverctl xcursor-theme Adwaita 24
+# 对齐 niri 的 cursor { hide-when-typing; hide-after-inactive-ms 1000 }
+riverctl hide-cursor when-typing enabled
+riverctl hide-cursor timeout 1000
+riverctl set-cursor-warp on-focus-change
+
+# ---------------- 布局 ----------------
+riverctl default-layout rivertile
+rivertile -view-padding 10 -outer-padding 20 -main-ratio 0.5 &
