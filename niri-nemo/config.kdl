@@ -1,0 +1,339 @@
+
+    // layer rules
+    // awww accounts for overview background/wallpaper
+    layer-rule {
+	match namespace="^awww-daemon$"
+	place-within-backdrop true
+    }
+
+    // noctalia window layer setup
+    layer-rule {
+	match namespace="^noctalia-panel$"
+	match namespace="^noctalia-window-switcher$"
+	match namespace="^noctalia-annotate$"
+	background-effect {
+		blur true
+		xray false
+	}
+	opacity 0.8
+	geometry-corner-radius 15
+    }
+
+    // noctalia bar layer setup
+    layer-rule {
+	match namespace="^noctalia-bar-"
+	background-effect {
+		blur false
+		xray false
+	}
+	opacity 0.8
+    }
+
+    // window rules
+    // window setup
+    window-rule {
+	geometry-corner-radius 12
+	clip-to-geometry true
+	background-effect {
+		xray true
+		blur true
+	}
+    }
+
+    // rule for actived window
+    window-rule {
+	match is-active=true
+	opacity 1.0
+    }
+	
+    // rule for not actived window
+    window-rule {
+	match is-active=false
+	opacity 0.88
+    }
+
+    // keyboard & mouse
+    input {
+        keyboard {
+            xkb {
+                layout "us"
+            }
+
+	    numlock
+        }
+	mouse {
+	    // natural-scroll
+	    accel-speed 0.4
+	    accel-profile "flat"
+	}
+	warp-mouse-to-focus
+    }
+
+    // monitor info
+    output "HDMI-A-1" {
+	mode "2560x1440@74.968"
+	scale 1.0
+	position x=0 y=0
+	focus-at-startup
+    }
+
+    // window layout
+    layout {
+	gaps 20
+	center-focused-column "never"
+	default-column-width {
+		proportion 0.33333 
+	}
+	preset-column-widths {
+		proportion 0.33333
+		proportion 0.5
+		proportion 0.66667
+		fixed 2560
+	}
+	focus-ring {
+		width 4
+		active-color "#7ea0d8"
+		inactive-color "#505050"
+	}
+        shadow {
+		on
+		softness 30
+		spread 5
+		offset x=0 y=5
+		color "#000007"
+	}
+	struts {
+		left 10
+		right 10
+		top 40
+		bottom 15
+	}
+    }
+
+    // blur mode attributes
+    blur {
+	passes 1
+	offset 2
+	noise 0.02
+	saturation 1.5
+    }
+    
+    debug {
+	honor-xdg-activation-with-invalid-serial
+    }
+
+    // dont show cheatsheet at startup
+    hotkey-overlay {
+	skip-at-startup
+    }
+
+    // overview setup
+    overview {
+	zoom 0.15
+	backdrop-color "#1a2123"
+	workspace-shadow {
+		softness 40
+		spread 10
+		offset x=0 y=10
+		color "#00000050"
+	}
+    }
+    // dont show title of windows
+    prefer-no-csd
+    // saved path for screenshot
+    screenshot-path "~/Pictures/screenshots/%Y-%m-%d-%H-%M-%S.png"
+
+    // ---------------- startups of niri ------------------
+    // fcitx5 will auto-start of XDG in niri
+    // spawn-at-startup "fcitx5" "-d"
+    spawn-at-startup "awww-daemon"
+    spawn-at-startup "clash-verge"
+    spawn-at-startup "polkit-kde-agent"
+    spawn-at-startup "noctalia"
+
+    // keymaps
+    binds {
+    	Mod+Slash { show-hotkey-overlay ;}
+	Mod+E hotkey-overlay-title="open the nautilus file manager" { spawn "nautilus" ; }
+	Mod+Alt+R hotkey-overlay-title="restart niri" { spawn-sh "niri msg action quit && exec niri-session" ; }
+	// if hyprpicker dont work `cause compatibility
+	// Mod+P hotkey-overlay-title="color picker" { spawn "niri" "msg" "pick-color"; }
+	Mod+P hotkey-overlay-title="color picker" { spawn "hyprpicker" "-a" ; }
+	Mod+B hotkey-overlay-title="wallpaper selector" { spawn "noctalia" "msg" "panel-toggle" "wallpaper" ;}
+	Mod+N hotkey-overlay-title="check past notifications" { spawn "noctalia" "msg" "panel-toggle" "wallpaper" ; }
+        Mod+T hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty" ; }
+        Mod+Return hotkey-overlay-title="Open tmux set up kitty" { spawn "kitty" "--" "zsh" "-c" "tmux set-option -g default-shell /etc/profiles/per-user/keith/bin/zsh; tmux attach -t main 2>/dev/null || tmux new -s main" ; }
+	Mod+R hotkey-overlay-title="application launcher" { spawn "noctalia" "msg" "panel-toggle" "launcher" ; }
+	Mod+Alt+L hotkey-overlay-title="lock screen" { spawn "noctalia" "msg" "session" "lock" ; }
+	Mod+Shift+L hotkey-overlay-title="suspend session of computer" { spawn "noctalia" "msg" "session" "lock-and-suspend" ;}
+	// recommended browser: firefox / zen / qutebrowser
+        Mod+W hotkey-overlay-title="open browser (default: firefox)"  { spawn "firefox" ; }
+
+        Mod+Q { close-window ; }
+	Mod+O repeat=false {
+		toggle-overview
+	}
+
+
+	// --- focus switcher
+	// in columns
+	Mod+Left {
+		focus-column-left	
+	}
+	Mod+Right {
+		focus-column-right	
+	}
+	Mod+Up {
+		focus-window-up
+	}
+	Mod+Down {
+		focus-window-down
+	}
+
+	// in workspaces
+	Mod+U {
+		focus-workspace-up
+	}
+	Mod+I {
+		focus-workspace-down
+	}
+
+	// --- window move
+	// in diff workspaces
+	Mod+Alt+U {
+		move-column-to-workspace-up
+	}
+	Mod+Alt+I {
+		move-column-to-workspace-down
+	}
+	Mod+Shift+I {
+		move-workspace-down
+	}
+	Mod+Shift+U {
+		move-workspace-up
+	}
+
+	// in single workspace
+	Mod+Ctrl+Left {
+		move-column-left
+	}
+	Mod+Ctrl+Right {
+		move-column-right
+	}
+	Mod+Ctrl+Up {
+		move-window-up
+	}
+	Mod+Ctrl+Down {
+		move-window-down
+	}
+
+	// workspace focus switcher
+	Mod+1 {
+		focus-workspace 1
+	}
+	Mod+2 {
+		focus-workspace 2
+	}
+	Mod+3 {
+		focus-workspace 3
+	}
+	Mod+4 {
+		focus-workspace 4
+	}
+	Mod+5 {
+		focus-workspace 5
+	}
+	Mod+6 {
+		focus-workspace 6
+	}
+	Mod+7 {
+		focus-workspace 7
+	}
+	Mod+8 {
+		focus-workspace 8
+	}
+	Mod+9 {
+		focus-workspace 9
+	}
+
+	// column dispatcher
+	Mod+Alt+1 {
+		move-column-to-workspace 1
+	}
+	Mod+Alt+2 {
+		move-column-to-workspace 2
+	}
+	Mod+Alt+3 {
+		move-column-to-workspace 3
+	}
+	Mod+Alt+4 {
+		move-column-to-workspace 4
+	}
+	Mod+Alt+5 {
+		move-column-to-workspace 5
+	}
+	Mod+Alt+6 {
+		move-column-to-workspace 6
+	}
+	Mod+Alt+7 {
+		move-column-to-workspace 7
+	}
+	Mod+Alt+8 {
+		move-column-to-workspace 8
+	}
+	Mod+Alt+9 {
+		move-column-to-workspace 9
+	}
+
+	// --- other window operation
+	// maximize width of column
+	Mod+D {
+		maximize-column
+	}
+	// diaplay in a whole screen
+	Mod+F {
+		fullscreen-window
+	}
+	// display in a whole screen but only in their layer
+	Mod+M {
+		maximize-window-to-edges
+	}
+	// display in the center of screen
+	Mod+C {
+		center-column
+	}
+	// similar to the above setup but for visible columns
+	Mod+Ctrl+C {
+		center-visible-columns
+	}
+
+	// column width or height adjustment
+	Mod+Minus {
+		set-column-width "-10%"
+	}
+	Mod+Equal {
+		set-column-width "+10%"
+	}
+	Mod+Shift+Minus {
+		set-window-height "-10%"
+	}
+	Mod+Shift+Equal {
+		set-window-height "+10%"
+	}
+
+	// toggle current window
+	Mod+V {
+		toggle-window-floating
+	}
+	// switch focus in floating and tiling windows
+	Mod+Shift+V {
+		switch-focus-between-floating-and-tiling
+	}
+
+	// quit session
+        Mod+Shift+E { quit ; }
+	Ctrl+Alt+Delete { quit ; }
+        Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit ; }
+        Print { screenshot ; }
+        Mod+Shift+A { spawn-sh "grim -g \"$(slurp)\" - | wl-copy" ; }
+    }
