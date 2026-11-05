@@ -6,3 +6,7 @@ tmux/plugins/
 *.swp
 *~
 .DS_Store
+
+# 手工备份文件（反正有 git 历史，不需要 .bak）
+*.bak
+*.bak-*
