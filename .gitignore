@@ -1,6 +1,6 @@
 # tmux 插件目录：每个插件自带 .git，属于嵌套仓库，不能直接提交。
 # 新机器上由 tpm（tmux plugin manager）自动安装，无需备份。
-tmux/plugins/
+Arch/tmux/plugins/
 
 # 编辑器/系统临时文件
 *.swp
