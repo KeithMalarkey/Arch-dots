@@ -30,7 +30,7 @@ return {
 		end
 
 		local function get_current_time()
-			return os.date("%Y-%m-%d %H:%M %a")
+			return os.date("%Y-%m-%d %H:%M %A")
 		end
 
 		-- 自定义 LSP 状态组件

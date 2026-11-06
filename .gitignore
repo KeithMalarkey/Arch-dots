@@ -10,3 +10,6 @@ tmux/plugins/
 # 手工备份文件（反正有 git 历史，不需要 .bak）
 *.bak
 *.bak-*
+
+# 嵌套独立仓库：NixOS 配置（同步到 KeithMalarkey/nix）
+nixos-config/

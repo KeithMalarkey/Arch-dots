@@ -864,7 +864,7 @@ binds {
     Mod+Shift+A hotkey-overlay-title="screenshot of specific region, saved as local file and copyed" {
         spawn "sh" "-c" "FILENAME=\"$HOME/Pictures/screenshots/$(date +%Y%m%d-%H%M%S).png\" && grim -g \"$(slurp)\" \"$FILENAME\" && sleep 0.1 && wl-copy < \"$FILENAME\""
     }
-    Mod+Alt+H hotkey-overlay-title="show all history from clipboard" {
+    Mod+H hotkey-overlay-title="show all history from clipboard" {
         spawn "noctalia" "msg" "panel-open" "clipboard"
     }
     Print {

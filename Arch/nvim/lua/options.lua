@@ -10,7 +10,7 @@ vim.opt.iskeyword:append("-")
 -- 高亮行和列
 vim.opt.cursorline = true
 -- vim.opt.cursorcolumn = true
-vim.opt.cursorlineopt = "number" -- 开启光标行高亮,只高亮行号
+-- vim.opt.cursorlineopt = "number" -- 开启光标行高亮,只高亮行号
 
 -- 配置 swapfile 行为
 -- 不要自动删除交换文件：文件被外部工具更新时，可能误删另一个 nvim
