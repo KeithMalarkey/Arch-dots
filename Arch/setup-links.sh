@@ -42,4 +42,9 @@ done
 # 壁纸：链到 ~/Pictures/walls（shared 子模块内）
 link_dir "$REPO_DIR/shared/walls" "$HOME/Pictures/walls"
 
+# bat 自定义主题（vault）需要构建缓存到 ~/.cache/bat，否则 --theme 不生效
+if command -v bat >/dev/null 2>&1 && [ -d "$REPO_DIR/shared/bat/themes" ]; then
+    bat cache --build >/dev/null 2>&1 || true
+fi
+
 echo "完成。"
