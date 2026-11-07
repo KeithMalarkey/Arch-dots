@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# 新机器部署：clone 本仓库后运行本脚本，自动重建 ~/.config 下的软链接。
-# 用法: bash setup-links.sh   （在仓库根目录运行即可，位置不限）
-# 布局约定：本仓库只存放 Arch 的配置，统一位于 Arch/ 子目录。
+# 新机器部署：clone 本仓库（含 shared 子模块）后运行本脚本，
+# 自动重建 ~/.config 下的软链接，并把壁纸链到 ~/Pictures/walls。
+# 用法: git clone --recurse-submodules <Arch-dots> && bash Arch/setup-links.sh
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-# 仓库中需要链入 ~/.config 的目录，以后新增配置就往这个列表里加名字
-CONFIGS=(bat fastfetch foot fuzzel hypr kitty mako niri noctalia nvim river tmux)
+# Arch 专属配置（本仓库内）
+ARCH_CONFIGS=(foot fuzzel hypr mako niri river)
 
-mkdir -p "$CONFIG_DIR"
-for name in "${CONFIGS[@]}"; do
-    src="$REPO_DIR/Arch/$name"
-    dst="$CONFIG_DIR/$name"
+# 与 NixOS 共享的配置（shared 子模块内）
+SHARED_CONFIGS=(bat fastfetch kitty noctalia nvim tmux)
+
+link_dir() {
+    local src="$1" dst="$2"
     if [ -L "$dst" ]; then
         if [ "$(readlink "$dst")" = "$src" ]; then
             echo "跳过（已正确链接）: $dst"
@@ -28,5 +29,17 @@ for name in "${CONFIGS[@]}"; do
         ln -s "$src" "$dst"
         echo "已链接: $dst -> $src"
     fi
+}
+
+mkdir -p "$CONFIG_DIR"
+for name in "${ARCH_CONFIGS[@]}"; do
+    link_dir "$REPO_DIR/$name" "$CONFIG_DIR/$name"
 done
+for name in "${SHARED_CONFIGS[@]}"; do
+    link_dir "$REPO_DIR/shared/$name" "$CONFIG_DIR/$name"
+done
+
+# 壁纸：链到 ~/Pictures/walls（shared 子模块内）
+link_dir "$REPO_DIR/shared/walls" "$HOME/Pictures/walls"
+
 echo "完成。"
