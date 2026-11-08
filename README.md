@@ -16,7 +16,7 @@
 
 Here is a configuration for Arch linux with River-classic and Niri WM.
 
-At the beginnning, you may need refer [Arch Installation](./Arch/arch_install_instruction/README.md) to install Arch Linux OS and infrastructure. There is a overview for Arch in the following.
+At the beginnning, you may need refer ./Arch/arch_install_instruction/README.md to install Arch Linux OS and infrastructure. There is a overview for Arch in the following.
 
 ---
 
