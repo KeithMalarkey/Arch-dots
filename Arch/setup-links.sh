@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 新机器部署：clone 本仓库（含 shared 子模块）后运行本脚本，
-# 自动重建 ~/.config 下的软链接，并把壁纸链到 ~/Pictures/walls。
+# 自动重建 ~/.config、shell dotfiles 和 ~/.local/bin 脚本的软链接，
+# 并把壁纸链到 ~/Pictures/walls。
 # 用法: git clone --recurse-submodules <Arch-dots> && bash Arch/setup-links.sh
 set -euo pipefail
 
@@ -74,6 +75,16 @@ link_file() {
 mkdir -p "$HOME/.local/bin"
 for name in "${LOCAL_BIN_SCRIPTS[@]}"; do
     link_file "$REPO_DIR/local/bin/$name" "$HOME/.local/bin/$name"
+done
+
+# shell 配置：bash（river）与 zsh（niri，shared 子模块）
+SHELL_DOTFILES=(
+    "$REPO_DIR/.bashrc:$HOME/.bashrc"
+    "$REPO_DIR/shared/.zshrc:$HOME/.zshrc"
+    "$REPO_DIR/shared/.zsh_export:$HOME/.zsh_export"
+)
+for pair in "${SHELL_DOTFILES[@]}"; do
+    link_file "${pair%%:*}" "${pair#*:}"
 done
 
 # 壁纸：链到 ~/Pictures/walls（shared 子模块内）

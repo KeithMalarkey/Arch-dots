@@ -4,7 +4,11 @@
 
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
-[[ $- == *i* ]] && source -- ~/.local/share/blesh/ble.sh --attach=none
+
+# ble.sh（可选）：未安装时跳过，不影响 bash_it 和提示符
+if [ -f "$HOME/.local/share/blesh/ble.sh" ]; then
+    source -- "$HOME/.local/share/blesh/ble.sh" --attach=none
+fi
 
 PS1='[\u@\h \W]\$ '
 # shellcheck disable=SC2034
@@ -16,7 +20,8 @@ case $- in
 esac
 
 # Path to the bash it configuration
-BASH_IT="/home/keith/.bash_it"
+# 默认 ~/.bash_it，可在环境里覆盖；不要写死用户名
+BASH_IT="${BASH_IT:-${HOME}/.bash_it}"
 
 # Lock and Load a custom theme file.
 # Leave empty to disable theming.
@@ -80,8 +85,12 @@ BASH_IT_AUTOMATIC_RELOAD_AFTER_CONFIG_CHANGE=1
 # Uncomment this to make Bash-it create alias reload.
 # BASH_IT_RELOAD_LEGACY=1
 
-# Load Bash It
-source "${BASH_IT?}/bash_it.sh"
+# Load Bash It；未安装时给出提示，下面的自定义 prompt 仍然生效
+if [ -f "${BASH_IT}/bash_it.sh" ]; then
+    source "${BASH_IT}/bash_it.sh"
+else
+    printf 'bash_it not found at %s (run Arch/install-bash-it.sh)\n' "$BASH_IT" >&2
+fi
 
 __vault_branch() {
     git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null

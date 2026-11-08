@@ -6,17 +6,18 @@
   - [1. Display Manager/Portal](#1-display-managerportal)
   - [2. Window Manager](#2-window-manager)
   - [3. Shell](#3-shell)
-  - [4. Other application](#4-other-application)
+  - [4. Other Applications](#4-other-applications)
   - [5. River WM](#5-river-wm)
+  - [6. Deployment](#6-deployment)
   - [Reference](#reference)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Arch Linux Dotfiles
 
-Here is a configuration for Arch linux with River-classic and Niri WM.
+Here is a configuration for Arch Linux with River Classic and Niri WM.
 
-At the beginnning, you may need refer ./Arch/arch_install_instruction/README.md to install Arch Linux OS and infrastructure. There is a overview for Arch in the following.
+At the beginning, refer to `Arch/arch_intall_instruction/README.md` to install Arch Linux and the base infrastructure. A short overview follows.
 
 ---
 
@@ -28,19 +29,39 @@ SDDM with silent greeter.
 
 River Classic and Niri.
 
-> Here is not River Compositor.
+> This is River Classic, not the River compositor.
 
 ## 3. Shell
 
-Noctalia v5.
+- **bash** for River Classic, configured by `Arch/.bashrc` on top of [bash-it](https://github.com/Bash-it/bash-it).
+- **zsh** + Oh My Zsh for Niri, shared through the `Arch/shared` submodule.
+- Noctalia v5 is the desktop shell (bar, launcher, notifications), not the login shell.
 
-## 4. Other application
+## 4. Other Applications
 
-application, intalled or recommended to install, are introduced in `Arch/arch_install_instruction/README.md` specifically.
+Applications, either installed or recommended, are described in `Arch/arch_intall_instruction/README.md` specifically.
 
 ## 5. River WM
 
-More, this repo provide a extra config of river-classic WM for the suckless.
+This repo also provides an extra River Classic setup for suckless-style workflows. Niri and River share the same terminal, colors and helper scripts, but River keeps its own keybindings and status bar.
+
+Main files:
+
+| Path | Purpose |
+| :-- | :-- |
+| `Arch/river/init` | River autostart and keybindings |
+| `Arch/local/bin/dam-status` | Status text provider for `dam` |
+| `Arch/local/bin/dam-bt` | Bluetooth menu used by `dam` |
+| `Arch/local/bin/dam-media` | Media/volume menu used by `dam` |
+| `Arch/local/bin/ime-run` | Runs GUI apps with fcitx5 environment variables |
+| `Arch/local/bin/river-helpers` | Tags, wallpaper, notification and keybinding helpers |
+| `Arch/fuzzel/fuzzel.ini` | Launcher/menu theme (also used by `dam-bt` and `dam-media`) |
+
+`setup-links.sh` links the five scripts into `~/.local/bin`.
+
+> `dam` itself is a small C status bar and is **not** vendored in this repo. Build it from [codeberg.org/sewn/dam](https://codeberg.org/sewn/dam) and install the binary as `~/.local/bin/dam`. Dependencies: `wayland`, `wayland-protocols`, `fcft`, `pixman`, `pkg-config`.
+>
+> `bemenu` has no config file here: it is only invoked with command-line flags for clipboard history and `river-helpers`. The default launcher is `fuzzel`.
 
 <center>
     <img src="./pics/s1.png" alt="river after configuration">
@@ -51,6 +72,17 @@ More, this repo provide a extra config of river-classic WM for the suckless.
     <img src="./pics/s2.png" alt="">
     <p>Overview of River </p>
 </center>
+
+## 6. Deployment
+
+```bash
+git clone --recurse-submodules git@github.com:KeithMalarkey/Arch-dots.git
+cd Arch-dots
+bash Arch/setup-links.sh        # ~/.config, shell dotfiles, ~/.local/bin scripts
+bash Arch/install-bash-it.sh    # bash-it at a pinned commit + custom aliases
+```
+
+`install-bash-it.sh` keeps the upstream bash-it clone in `~/.bash_it` (not in this repo) and only stores the overlay under `Arch/bash_it/`.
 
 ## Reference
 
@@ -63,3 +95,9 @@ More, this repo provide a extra config of river-classic WM for the suckless.
     + https://github.com/uiriansan/SilentSDDM
 + Noctalia
     + https://noctalia.dev/shell
++ dam
+    + https://codeberg.org/sewn/dam
++ bash-it
+    + https://github.com/Bash-it/bash-it
++ ble.sh (optional)
+    + https://github.com/akinomyoga/ble.sh
