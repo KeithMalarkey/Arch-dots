@@ -1,12 +1,8 @@
-# 编辑器/系统临时文件
 *.swp
 *~
 .DS_Store
-
-# 手工备份文件（反正有 git 历史，不需要 .bak）
 *.bak
 *.bak-*
 *.hm-bak
-
-# 嵌套独立仓库：NixOS 配置（同步到 KeithMalarkey/nix）
 nixos-config/
+.bash_it/

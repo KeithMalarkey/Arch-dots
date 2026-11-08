@@ -74,33 +74,35 @@
     - [3.7 可选：声明式安装](#37-%E5%8F%AF%E9%80%89%E5%A3%B0%E6%98%8E%E5%BC%8F%E5%AE%89%E8%A3%85)
     - [3.8 常见坑](#38-%E5%B8%B8%E8%A7%81%E5%9D%91)
     - [3.9 最小验收清单](#39-%E6%9C%80%E5%B0%8F%E9%AA%8C%E6%94%B6%E6%B8%85%E5%8D%95)
-- [四、Linux Selection](#%E5%9B%9Blinux-selection)
-  - [4.1 先看结论](#41-%E5%85%88%E7%9C%8B%E7%BB%93%E8%AE%BA)
-  - [4.2 新手友好型](#42-%E6%96%B0%E6%89%8B%E5%8F%8B%E5%A5%BD%E5%9E%8B)
-    - [4.2.1 Linux Mint](#421-linux-mint)
-    - [4.2.2 Ubuntu LTS](#422-ubuntu-lts)
-    - [4.2.3 Fedora Workstation](#423-fedora-workstation)
-    - [4.2.4 Pop!_OS](#424-pop_os)
-    - [4.2.5 Debian Stable](#425-debian-stable)
-    - [4.2.6 openSUSE Tumbleweed 与 Leap](#426-opensuse-tumbleweed-%E4%B8%8E-leap)
-    - [4.2.7 外观优先：Zorin OS 与 elementary OS](#427-%E5%A4%96%E8%A7%82%E4%BC%98%E5%85%88zorin-os-%E4%B8%8E-elementary-os)
-  - [4.3 不可变与原子更新](#43-%E4%B8%8D%E5%8F%AF%E5%8F%98%E4%B8%8E%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0)
-  - [4.4 Arch 系：想用 Arch 但不想手装](#44-arch-%E7%B3%BB%E6%83%B3%E7%94%A8-arch-%E4%BD%86%E4%B8%8D%E6%83%B3%E6%89%8B%E8%A3%85)
-    - [4.4.1 EndeavourOS](#441-endeavouros)
-    - [4.4.2 Manjaro](#442-manjaro)
-    - [4.4.3 CachyOS](#443-cachyos)
-    - [4.4.4 Arch 与 archinstall](#444-arch-%E4%B8%8E-archinstall)
-  - [4.5 进阶型](#45-%E8%BF%9B%E9%98%B6%E5%9E%8B)
-    - [4.5.1 NixOS](#451-nixos)
-    - [4.5.2 Gentoo](#452-gentoo)
-    - [4.5.3 Void Linux](#453-void-linux)
-    - [4.5.4 Alpine Linux（了解即可）](#454-alpine-linux%E4%BA%86%E8%A7%A3%E5%8D%B3%E5%8F%AF)
-    - [4.5.5 Slackware 与 LFS（了解即可）](#455-slackware-%E4%B8%8E-lfs%E4%BA%86%E8%A7%A3%E5%8D%B3%E5%8F%AF)
-  - [4.6 怎么选：按人群](#46-%E6%80%8E%E4%B9%88%E9%80%89%E6%8C%89%E4%BA%BA%E7%BE%A4)
-  - [4.7 试错成本最低的方式](#47-%E8%AF%95%E9%94%99%E6%88%90%E6%9C%AC%E6%9C%80%E4%BD%8E%E7%9A%84%E6%96%B9%E5%BC%8F)
-- [Resources](#resources)
+- [P2. Linux Selection](#p2-linux-selection)
+  - [一、先看结论](#%E4%B8%80%E5%85%88%E7%9C%8B%E7%BB%93%E8%AE%BA)
+  - [二、新手友好型](#%E4%BA%8C%E6%96%B0%E6%89%8B%E5%8F%8B%E5%A5%BD%E5%9E%8B)
+    - [2.1 Linux Mint](#21-linux-mint)
+    - [2.2 Ubuntu LTS](#22-ubuntu-lts)
+    - [2.3 Fedora Workstation](#23-fedora-workstation)
+    - [2.4 Pop!_OS](#24-pop_os)
+    - [2.5 Debian Stable](#25-debian-stable)
+    - [2.6 openSUSE Tumbleweed 与 Leap](#26-opensuse-tumbleweed-%E4%B8%8E-leap)
+    - [2.7 外观优先：Zorin OS 与 elementary OS](#27-%E5%A4%96%E8%A7%82%E4%BC%98%E5%85%88zorin-os-%E4%B8%8E-elementary-os)
+  - [三、不可变与原子更新](#%E4%B8%89%E4%B8%8D%E5%8F%AF%E5%8F%98%E4%B8%8E%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0)
+  - [四、Arch 系：想用 Arch 但不想手装](#%E5%9B%9Barch-%E7%B3%BB%E6%83%B3%E7%94%A8-arch-%E4%BD%86%E4%B8%8D%E6%83%B3%E6%89%8B%E8%A3%85)
+    - [4.1 EndeavourOS](#41-endeavouros)
+    - [4.2 Manjaro](#42-manjaro)
+    - [4.3 CachyOS](#43-cachyos)
+    - [4.4 Arch 与 archinstall](#44-arch-%E4%B8%8E-archinstall)
+  - [五、进阶型](#%E4%BA%94%E8%BF%9B%E9%98%B6%E5%9E%8B)
+    - [5.1 NixOS](#51-nixos)
+    - [5.2 Gentoo](#52-gentoo)
+    - [5.3 Void Linux](#53-void-linux)
+    - [5.4 Alpine Linux（了解即可）](#54-alpine-linux%E4%BA%86%E8%A7%A3%E5%8D%B3%E5%8F%AF)
+    - [5.5 Slackware 与 LFS（了解即可）](#55-slackware-%E4%B8%8E-lfs%E4%BA%86%E8%A7%A3%E5%8D%B3%E5%8F%AF)
+  - [六、怎么选：按人群](#%E5%85%AD%E6%80%8E%E4%B9%88%E9%80%89%E6%8C%89%E4%BA%BA%E7%BE%A4)
+  - [七、试错成本最低的方式](#%E4%B8%83%E8%AF%95%E9%94%99%E6%88%90%E6%9C%AC%E6%9C%80%E4%BD%8E%E7%9A%84%E6%96%B9%E5%BC%8F)
+- [P3. Resources](#p3-resources)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+> 本文档有英文版本：[README.md](./README.md)。
 
 # P0. 前言
 
@@ -1275,7 +1277,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 - [ ] `ping`、DNS、时间同步正常
 - [ ] live USB 仍可作为回滚手段
 
-# 四、Linux Selection
+# P2. Linux Selection
 
 在前言里，我们提到 Arch Linux 对于 Linux 小白来说并不友好。下面按“上手门槛”从低到高列出常见发行版，重点不是比谁“更强”，而是看清每个系统的取舍：更新有多快、坏了能不能回滚、出问题要靠文档还是靠自己。
 
@@ -1285,7 +1287,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 > 2. 系统坏了，你更能接受“重装”还是“回滚快照”？
 > 3. 你的硬件新不新？新 CPU、新网卡、双显卡笔记本通常需要更新的内核和固件。
 
-## 4.1 先看结论
+## 一、先看结论
 
 | 发行版 | 基础 | 更新模式 | 包管理 | 门槛 | 一句话 |
 | :--- | :--- | :--- | :--- | :---: | :--- |
@@ -1302,9 +1304,9 @@ archinstall --config user_configuration.json --config user_credentials.json
 | Gentoo | 独立 | 滚动 | portage | ★★★★★ | 源码编译，完全掌控 |
 | Void Linux | 独立 | 滚动 | xbps | ★★★ | 无 systemd，小而快 |
 
-## 4.2 新手友好型
+## 二、新手友好型
 
-### 4.2.1 Linux Mint
+### 2.1 Linux Mint
 
 定位：**给“我只想用电脑”的人**。
 
@@ -1322,7 +1324,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 适合：第一次长期用 Linux 的桌面用户、给家人装的机器。
 
-### 4.2.2 Ubuntu LTS
+### 2.2 Ubuntu LTS
 
 - 生态最大：几乎所有商业软件、驱动、教程都优先支持 Ubuntu
 - LTS 版本两年一发，标准安全维护 5 年，Ubuntu Pro 还能继续延长
@@ -1332,7 +1334,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：snap 强制、GNOME 定制受限、默认预装偏多。想要更干净的 Ubuntu，可以看 Linux Mint、Pop!_OS 或 Debian。
 
-### 4.2.3 Fedora Workstation
+### 2.3 Fedora Workstation
 
 - 大约每 6 个月发一版，每个版本支持约 13 个月
 - 上游新东西落地最快：新内核、新 GNOME、Wayland、PipeWire、SELinux 默认开启
@@ -1342,7 +1344,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：版本生命周期短，需要定期大版本升级；部分专有驱动和多媒体编解码要额外启用 RPM Fusion。
 
-### 4.2.4 Pop!_OS
+### 2.4 Pop!_OS
 
 - System76 出品，基于 Ubuntu LTS
 - 提供带 NVIDIA 驱动的 ISO，双显卡笔记本切换相对省心
@@ -1351,7 +1353,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：主要面向自家硬件优化，其他机器也能用但优势没那么明显；COSMIC 仍在快速迭代。
 
-### 4.2.5 Debian Stable
+### 2.5 Debian Stable
 
 - 最“稳”的通用发行版之一，服务器和桌面都能用
 - 发布周期约两年，安全支持加 LTS 可以覆盖很多年
@@ -1363,7 +1365,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 适合：想要“装完几年不动”的机器、家庭服务器、老笔记本。
 
-### 4.2.6 openSUSE Tumbleweed 与 Leap
+### 2.6 openSUSE Tumbleweed 与 Leap
 
 - Leap 是固定版本，偏企业、偏稳定；Tumbleweed 是滚动更新
 - `zypper` 包管理，YaST 图形和终端管理工具覆盖面很广
@@ -1373,14 +1375,14 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：包管理命令和主流 apt、dnf 不同；国内镜像配置要花点时间；Tumbleweed 更新量较大。
 
-### 4.2.7 外观优先：Zorin OS 与 elementary OS
+### 2.7 外观优先：Zorin OS 与 elementary OS
 
 - Zorin OS：基于 Ubuntu LTS，主题和布局可以模仿 Windows 或 macOS，适合完全不想学新操作逻辑的人
 - elementary OS：基于 Ubuntu LTS，Pantheon 桌面，设计接近 macOS，自带应用风格统一
 
 两者都属于“好看、够用、别折腾”的路线，代价是软件生态和可定制性不如主流桌面。
 
-## 4.3 不可变与原子更新
+## 三、不可变与原子更新
 
 这一类系统的思路是：**系统分区以只读镜像为基础，更新以整镜像为单位，出问题直接回滚到上一个版本**。
 
@@ -1392,9 +1394,9 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：改系统底层（驱动、内核模块、`/usr` 下的东西）要比传统发行版绕；很多教程不适用。
 
-## 4.4 Arch 系：想用 Arch 但不想手装
+## 四、Arch 系：想用 Arch 但不想手装
 
-### 4.4.1 EndeavourOS
+### 4.1 EndeavourOS
 
 定位：**最接近原味 Arch 的“安装器版 Arch”**，也是最推荐给“想学 Arch 但被手工安装劝退”的人。
 
@@ -1413,7 +1415,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 适合：想长期用 Arch、需要 AUR、但不想从 `pacstrap` 开始的人。
 
-### 4.4.2 Manjaro
+### 4.2 Manjaro
 
 - 基于 Arch，但用自己的仓库，软件包会比 Arch 延迟一段时间，换取更多测试
 - `pamac` 图形包管理器，`mhwd` 硬件检测工具，对新手更友好
@@ -1422,7 +1424,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：延迟仓库和 AUR 混用容易出依赖问题；历史上出现过证书过期、AUR 包与仓库不同步等事故。想要“纯 Arch 体验”的人更推荐 EndeavourOS。
 
-### 4.4.3 CachyOS
+### 4.3 CachyOS
 
 - 基于 Arch，主打性能：x86-64-v3、v4 优化包，BORE 等调度器，可选低延迟内核
 - 提供 Calamares 安装器，桌面选择多
@@ -1431,7 +1433,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：优化包和 AUR 的组合偶尔会有兼容问题；出问题时要能看懂 Arch 系的排查方法。新手不建议把它当第一个 Arch。
 
-### 4.4.4 Arch 与 archinstall
+### 4.4 Arch 与 archinstall
 
 - 官方 ISO 自带 `archinstall`，可以半自动完成分区、base、桌面、用户
 - 装出来的就是标准 Arch，没有额外封装
@@ -1439,9 +1441,9 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：`archinstall` 不是万能，分区方案复杂或双系统时仍要手动处理；装完的配置要自己维护。
 
-## 4.5 进阶型
+## 五、进阶型
 
-### 4.5.1 NixOS
+### 5.1 NixOS
 
 定位：**把整台机器写成代码**。
 
@@ -1461,7 +1463,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 适合：愿意投入一两周学习、追求可复现和回滚的人。装之前建议先看官方手册，以及 `nixos-anywhere`、`disko` 这类工具。
 
-### 4.5.2 Gentoo
+### 5.2 Gentoo
 
 定位：**从源码组装你自己的系统**。
 
@@ -1480,7 +1482,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 适合：想深入理解 Linux、愿意花时间编译和调优的人，或者拿旧机器做实验。
 
-### 4.5.3 Void Linux
+### 5.3 Void Linux
 
 - 独立发行版，不用 systemd，用 `runit` 做服务管理
 - `xbps` 包管理，滚动更新，启动快、占用小
@@ -1489,21 +1491,21 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 缺点：软件生态比 Debian、Arch 小；没有 systemd 意味着部分软件要额外适配；中文资料少。
 
-### 4.5.4 Alpine Linux（了解即可）
+### 5.4 Alpine Linux（了解即可）
 
 - musl libc 加 BusyBox 加 OpenRC，镜像极小
 - `apk` 包管理，稳定分支加 edge 滚动分支
 - 主战场是容器、嵌入式、路由器，不是日常桌面
 - 桌面能用，但 glibc 兼容层和驱动会让你花很多时间
 
-### 4.5.5 Slackware 与 LFS（了解即可）
+### 5.5 Slackware 与 LFS（了解即可）
 
 - Slackware：现存最老的发行版之一，不自动解决依赖，配置全靠手动，适合体验传统 Unix
 - LFS（Linux From Scratch）：跟着书从源码编译出整个系统，纯教学用途，不建议日常使用
 
 这两个更像是“课程”，不是“日常系统”。
 
-## 4.6 怎么选：按人群
+## 六、怎么选：按人群
 
 | 你的情况 | 推荐 |
 | :--- | :--- |
@@ -1518,7 +1520,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 | 想彻底理解 Linux | Gentoo、LFS |
 | 不想维护系统 | Fedora Silverblue、openSUSE Aeon |
 
-## 4.7 试错成本最低的方式
+## 七、试错成本最低的方式
 
 1. **Ventoy U 盘加 Live ISO**：不安装，先跑起来看硬件是否认，重点看 WiFi、声音、触摸板、显卡
 2. **虚拟机**：VirtualBox、KVM、GNOME Boxes，适合试桌面和安装流程，不适合测真实显卡
@@ -1529,7 +1531,7 @@ archinstall --config user_configuration.json --config user_credentials.json
 
 
 <a id="Resources"></a>
-# Resources
+# P3. Resources
 
 - Ventoy: https://www.ventoy.net/cn/index.html
 - Rufus:
