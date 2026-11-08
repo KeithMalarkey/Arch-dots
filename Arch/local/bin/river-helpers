@@ -1,0 +1,210 @@
+#!/bin/sh
+# ~/.local/bin/river-helpers
+#
+# 补齐 niri 里有、river 0.3 没有内置命令的按键功能。
+# river 不能查询「当前 tags」「当前 main-ratio」，所以这类有状态的操作
+# 由本脚本把状态记在 $XDG_RUNTIME_DIR/river-helpers/ 下再调用 riverctl。
+#
+# 用法:
+#   river-helpers keys            按键速查（bemenu）
+#   river-helpers wall            壁纸选择（bemenu + awww）
+#   river-helpers notif           通知历史（makoctl + bemenu）
+#   river-helpers dpms            显示器开关（wlopm）
+#   river-helpers tag  goto N|next|prev    聚焦标签
+#   river-helpers send goto N|next|prev    把窗口送到标签
+#   river-helpers preset back|fwd|reset    rivertile main-ratio 预设
+
+set -u
+
+RIVERCTL=${RIVERCTL:-riverctl}
+RUNTIME=${XDG_RUNTIME_DIR:-/tmp}
+STATE="$RUNTIME/river-helpers"
+
+mkdir -p "$STATE" 2>/dev/null
+
+notify() {
+    command -v notify-send >/dev/null 2>&1 || return 0
+    notify-send "$@"
+}
+
+# ---------------- 标签 ----------------
+# river 没有 get-tags，只能自己记录最近一次聚焦的标签号（1..9）。
+tag_now() {
+    n=$(cat "$STATE/tag" 2>/dev/null) || n=1
+    case "$n" in '' | *[!0-9]*) n=1 ;; esac
+    if [ "$n" -lt 1 ] || [ "$n" -gt 9 ]; then n=1; fi
+    printf '%s\n' "$n"
+}
+
+tag_next() {
+    n=$(tag_now)
+    if [ "$n" -ge 9 ]; then n=1; else n=$((n + 1)); fi
+    printf '%s\n' "$n"
+}
+
+tag_prev() {
+    n=$(tag_now)
+    if [ "$n" -le 1 ]; then n=9; else n=$((n - 1)); fi
+    printf '%s\n' "$n"
+}
+
+mask_of() {
+    echo $((1 << ($1 - 1)))
+}
+
+resolve_tag() {
+    case "${1:-}" in
+    goto)
+        case "${2:-}" in
+        '' | *[!0-9]*) tag_now ;;
+        *)
+            if [ "$2" -ge 1 ] && [ "$2" -le 9 ]; then
+                printf '%s\n' "$2"
+            else
+                tag_now
+            fi
+            ;;
+        esac
+        ;;
+    next) tag_next ;;
+    prev) tag_prev ;;
+    *) tag_now ;;
+    esac
+}
+
+# ---------------- 布局比例预设 ----------------
+# 和 niri 的 preset-column-widths 对齐: 1/3、1/2、2/3
+# rivertile 的 main-ratio 限制在 0.1 ~ 0.9，所以不能设成 1.0。
+preset_ratio() {
+    idx=$(cat "$STATE/preset" 2>/dev/null) || idx=1
+    case "$idx" in '' | *[!0-9]*) idx=1 ;; esac
+    if [ "$idx" -gt 2 ]; then idx=1; fi
+
+    case "${1:-}" in
+    back) if [ "$idx" -le 0 ]; then idx=2; else idx=$((idx - 1)); fi ;;
+    fwd) if [ "$idx" -ge 2 ]; then idx=0; else idx=$((idx + 1)); fi ;;
+    reset) idx=1 ;;
+    esac
+    echo "$idx" >"$STATE/preset"
+
+    case "$idx" in
+    0) echo "0.33333" ;;
+    2) echo "0.66667" ;;
+    *) echo "0.5" ;;
+    esac
+}
+
+# ---------------- 按键速查 ----------------
+show_keys() {
+    cat <<'EOF' | bemenu -i -l 10 -p "river cheatsheet"
+Super+T				   Terminal foot
+Super+Return		   Tmux main session with foot
+Super+E				   FileManager nautilus
+Super+W				   Browser firefox
+Super+R				   App launcher bemenu-run
+Super+Slash			   Cheatsheet
+Super+B				   Wallpaper selector
+Super+H				   Notification history
+Super+P				   Color picker hyprpicker
+Super+Shift+S		   shotori screenshot
+Print				   shotori screenshot UI
+Ctrl+Print			   Full screenshot
+Alt+A				   Region screenshot and documental save
+Super+Shift+A		   Region screenshot, documental save and copy
+Super+Alt+H			   clipboard history
+Super+L				   Screen lock
+Super+Shift+L		   Screen lock then suspend
+Super+Q				   Close Window
+Super+M				   Maxsize window
+Super+V				   Flow or tile window
+Super+Shift+V		   Back to floating window
+Super+<arrow>		   Focus windows
+Super+Ctrl+<arrow>	   Exchange neighboring windows
+Super+U / I			   next or previous label 
+Super+Alt+U / I		   send window to next or previous label 
+Super+1..9			   go to label 1..9
+Super+Alt+1..9		   send window to label 1..9
+Super+minus/equal	   narrow or widen windows -/+ 10%
+Super+Ctrl+H / L	   main region -/+ 10%
+Super+Ctrl+Shift+H/L   cnt of windows in main region +/- 1
+Super+Shift+R		   set to preseted width（2/3 → 1/2 → 1/3）
+Super+Ctrl+R		   set window width to 1/2 of desktop
+Super+Ctrl+F		   full desktop（ratio 0.9）
+Super+Alt+R			   quit river
+EOF
+}
+
+# ---------------- 壁纸 ----------------
+pick_wallpaper() {
+    root="$HOME/Pictures/walls"
+    [ -d "$root" ] || {
+        notify "找不到壁纸目录" "$root"
+        exit 1
+    }
+
+    sel=$(cd "$root" && find . -type f \
+        \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
+        -o -iname '*.gif' -o -iname '*.webp' \) -printf '%P\n' |
+        sort | bemenu -i -l 20 -p "Wallpaper")
+
+    [ -n "${sel:-}" ] || exit 0
+    awww img "$root/$sel" --transition-type fade --transition-duration 1
+}
+
+# ---------------- 通知历史 ----------------
+show_notifications() {
+    makoctl history -j 2>/dev/null | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+for n in reversed(data):
+    app = n.get("app_name") or "?"
+    summary = (n.get("summary") or "").replace("\n", " ")
+    body = (n.get("body") or "").replace("\n", " ")
+    if len(body) > 100:
+        body = body[:100] + "..."
+    line = f"[{app}] {summary}"
+    if body:
+        line += " — " + body
+    print(line)
+' | bemenu -i -l 20 -p "通知历史（Esc 关闭）" >/dev/null
+}
+
+# ---------------- 显示器开关 ----------------
+toggle_dpms() {
+    if command -v wlopm >/dev/null 2>&1; then
+        wlopm --toggle
+    else
+        notify "缺少 wlopm" "sudo pacman -S wlopm，装好后 Super+Shift+P 才能关屏"
+    fi
+}
+
+# ---------------- 入口 ----------------
+cmd=${1:-}
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+keys) show_keys ;;
+wall) pick_wallpaper ;;
+notif) show_notifications ;;
+dpms) toggle_dpms ;;
+tag)
+    n=$(resolve_tag "${1:-}" "${2:-}")
+    if "$RIVERCTL" set-focused-tags "$(mask_of "$n")"; then
+        echo "$n" >"$STATE/tag"
+    fi
+    ;;
+send)
+    n=$(resolve_tag "${1:-}" "${2:-}")
+    "$RIVERCTL" set-view-tags "$(mask_of "$n")"
+    ;;
+preset)
+    "$RIVERCTL" send-layout-cmd rivertile "main-ratio $(preset_ratio "${1:-}")"
+    ;;
+*)
+    printf '用法: %s {keys|wall|notif|dpms|tag|send|preset} ...\n' "$0" >&2
+    exit 1
+    ;;
+esac

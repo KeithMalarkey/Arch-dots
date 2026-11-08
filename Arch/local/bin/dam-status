@@ -1,0 +1,402 @@
+#!/usr/bin/env python3
+# ~/.local/bin/dam-status
+# dam 的状态提供器：输出一行，字段用 \x1f 分隔。
+# 顺序：media / sys / ime / mic / bt / wifi / dt / bat
+# 事件驱动：playerctl / pactl / bluetoothctl / nmcli / upower 监听变化；
+# CPU/GPU/磁盘每 10 秒采样；时间每秒更新；其余模块每 2 秒兜底刷新。
+
+import atexit
+import glob
+import os
+import re
+import signal
+import subprocess
+import sys
+import threading
+import time
+
+FIELDS = ("media", "sys", "ime", "mic", "bt", "wifi", "dt", "bat")
+state = {k: "" for k in FIELDS}
+lock = threading.Lock()
+dirty = threading.Event()
+
+SEP = "\x1f"
+ALERT = "\x02"
+
+# 告警阈值
+LOW_BATTERY = 15   # 电量 <= 15% 时变红
+HIGH_USAGE = 80    # CPU 或 GPU 使用率 >= 80% 时变红
+
+children = []
+children_lock = threading.Lock()
+
+
+def popen(cmd, **kwargs):
+    p = subprocess.Popen(cmd, **kwargs)
+    with children_lock:
+        children.append(p)
+    return p
+
+
+def cleanup():
+    with children_lock:
+        for p in children:
+            try:
+                p.terminate()
+            except Exception:
+                pass
+
+
+atexit.register(cleanup)
+
+
+def _shutdown(_signum, _frame):
+    cleanup()
+    os._exit(0)
+
+
+signal.signal(signal.SIGTERM, _shutdown)
+signal.signal(signal.SIGINT, _shutdown)
+
+
+def emit_field(key, value):
+    with lock:
+        if state[key] != value:
+            state[key] = value
+            dirty.set()
+
+
+def run(cmd, timeout=2):
+    try:
+        p = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=timeout,
+        )
+        return p.stdout.strip()
+    except Exception:
+        return ""
+
+
+def read_file(path):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def clip(text, limit):
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+# ---------------------------------------------------------------- media
+def media_state():
+    out = run(["playerctl", "metadata", "--format", "{{status}}\t{{artist}}\t{{title}}"])
+    if not out:
+        return ""
+    parts = out.split("\t")
+    status = parts[0] if parts else ""
+    artist = parts[1] if len(parts) > 1 else ""
+    title = parts[2] if len(parts) > 2 else ""
+    if not title:
+        return ""
+    icon = "󰎆" if status == "Playing" else "󰏤"
+    text = f"{artist} - {title}" if artist else title
+    return f"{icon} {clip(text, 34)}"
+
+
+def media_loop():
+    while True:
+        try:
+            p = popen(
+                ["playerctl", "-F", "metadata", "--format", "{{status}}\t{{artist}}\t{{title}}"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            for line in p.stdout:
+                parts = line.rstrip("\n").split("\t")
+                status = parts[0] if parts else ""
+                artist = parts[1] if len(parts) > 1 else ""
+                title = parts[2] if len(parts) > 2 else ""
+                if title:
+                    icon = "󰎆" if status == "Playing" else "󰏤"
+                    text = f"{artist} - {title}" if artist else title
+                    emit_field("media", f"{icon} {clip(text, 34)}")
+                else:
+                    emit_field("media", "")
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(5)
+
+
+# ---------------------------------------------------------------- system
+_prev_cpu = None
+
+
+def cpu_percent():
+    global _prev_cpu
+    try:
+        vals = [int(x) for x in open("/proc/stat").readline().split()[1:]]
+    except Exception:
+        return 0
+    idle = vals[3] + (vals[4] if len(vals) > 4 else 0)
+    total = sum(vals)
+    pct = 0
+    if _prev_cpu:
+        dt = total - _prev_cpu[0]
+        di = idle - _prev_cpu[1]
+        if dt > 0:
+            pct = round(100 * (dt - di) / dt)
+    _prev_cpu = (total, idle)
+    return pct
+
+
+def gpu_percent():
+    out = run(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"])
+    if out:
+        return out.splitlines()[0].strip()
+    for path in glob.glob("/sys/class/drm/card[0-9]/device/gpu_busy_percent"):
+        value = read_file(path)
+        if value:
+            return value
+    return "--"
+
+
+def human_bytes(n):
+    for unit in ("B", "K", "M", "G", "T"):
+        if n < 1024:
+            return f"{n:.0f}{unit}"
+        n /= 1024
+    return f"{n:.0f}P"
+
+
+def disk_usage():
+    out = run(["df", "-B1", "--output=used,size", "/"])
+    lines = out.splitlines()
+    if len(lines) >= 2:
+        try:
+            used, size = [int(x) for x in lines[1].split()[:2]]
+            return f"{human_bytes(used)}/{human_bytes(size)}"
+        except ValueError:
+            pass
+    return "--"
+
+
+def sys_state():
+    cpu = cpu_percent()
+    gpu = gpu_percent()
+    gpu_num = int(gpu) if gpu.isdigit() else -1
+    gpu_text = f"{gpu}%" if gpu_num >= 0 else gpu
+    text = f"󰻠 {cpu}% 󰢮 {gpu_text} 󰋊 {disk_usage()}"
+    if cpu >= HIGH_USAGE or gpu_num >= HIGH_USAGE:
+        return ALERT + text
+    return text
+
+
+# ---------------------------------------------------------------- ime
+def ime_state():
+    name = run(["fcitx5-remote", "-n"])
+    chinese = bool(name) and "keyboard" not in name.lower()
+    return f"󰌌 {'中' if chinese else 'en'}"
+
+
+def ime_loop():
+    while True:
+        emit_field("ime", ime_state())
+        time.sleep(0.4)
+
+
+# ---------------------------------------------------------------- mic
+def mic_state():
+    out = run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@"])
+    if not out:
+        return "󰍭 未连通"
+    m = re.search(r"Volume:\s*([0-9.]+)", out)
+    vol = round(float(m.group(1)) * 100) if m else 0
+    if "[MUTED]" in out:
+        return f"󰍭 {vol}%"
+    return f"󰍬 {vol}%"
+
+
+def pactl_loop():
+    while True:
+        try:
+            p = popen(
+                ["pactl", "subscribe"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            for line in p.stdout:
+                if "source" in line or "server" in line or "sink" in line:
+                    emit_field("mic", mic_state())
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(1)
+
+
+# ---------------------------------------------------------------- bluetooth
+def bt_state():
+    show = run(["bluetoothctl", "show"])
+    if "Powered: yes" not in show:
+        return "󰂲 off"
+    out = run(["bluetoothctl", "devices", "Connected"])
+    for line in out.splitlines():
+        parts = line.split(" ", 2)
+        if len(parts) == 3:
+            return f"󰂱 {clip(parts[2], 18)}"
+    return "󰂯 on"
+
+
+def bt_loop():
+    # bluetoothctl --monitor 在非交互 stdin 下会直接退出，这里用 2s 轮询。
+    while True:
+        emit_field("bt", bt_state())
+        time.sleep(2)
+
+
+# ---------------------------------------------------------------- wifi
+def wifi_state():
+    out = run(["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"])
+    for line in out.splitlines():
+        parts = line.split(":", 1)
+        if len(parts) == 2 and parts[0] == "yes":
+            return f"󰤨 {clip(parts[1], 20)}"
+    return "󰤭 off"
+
+
+def nm_loop():
+    while True:
+        try:
+            p = popen(
+                ["nmcli", "monitor"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            for _ in p.stdout:
+                emit_field("wifi", wifi_state())
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(1)
+
+
+# ---------------------------------------------------------------- datetime
+def dt_state():
+    return "󰃭 " + time.strftime("%Y.%m.%d %H:%M")
+
+
+# ---------------------------------------------------------------- battery
+def bat_state():
+    capacity = read_file("/sys/class/power_supply/BAT0/capacity")
+    status = read_file("/sys/class/power_supply/BAT0/status")
+    if not capacity:
+        return ""
+    try:
+        pct = int(capacity)
+    except ValueError:
+        pct = 0
+    if status == "Charging":
+        icon = "󰂄"
+    elif pct >= 95:
+        icon = "󰁹"
+    elif pct >= 80:
+        icon = "󰂂"
+    elif pct >= 60:
+        icon = "󰁿"
+    elif pct >= 40:
+        icon = "󰁾"
+    elif pct >= 20:
+        icon = "󰁻"
+    elif pct >= 10:
+        icon = "󰁺"
+    else:
+        icon = "󰂎"
+    text = f"{icon} {pct}%"
+    if pct <= LOW_BATTERY:
+        return ALERT + text
+    return text
+
+
+def upower_loop():
+    while True:
+        try:
+            p = popen(
+                ["upower", "--monitor"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            for _ in p.stdout:
+                emit_field("bat", bat_state())
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(1)
+
+
+# ---------------------------------------------------------------- main
+def emit():
+    with lock:
+        line = SEP.join(state[k] for k in FIELDS)
+    sys.stdout.write(line + "\n")
+    sys.stdout.flush()
+
+
+def main():
+    state["media"] = media_state()
+    state["sys"] = sys_state()
+    state["ime"] = ime_state()
+    state["mic"] = mic_state()
+    state["bt"] = bt_state()
+    state["wifi"] = wifi_state()
+    state["dt"] = dt_state()
+    state["bat"] = bat_state()
+    emit()
+
+    for target in (media_loop, ime_loop, pactl_loop, bt_loop, nm_loop, upower_loop):
+        threading.Thread(target=target, daemon=True).start()
+
+    last_slow = time.time()
+    last_sys = time.time()
+    while True:
+        dirty.wait(timeout=1)
+        dirty.clear()
+
+        emit_field("dt", dt_state())
+
+        now = time.time()
+        if now - last_sys >= 10:
+            emit_field("sys", sys_state())
+            last_sys = now
+        if now - last_slow >= 2:
+            emit_field("media", media_state())
+            emit_field("mic", mic_state())
+            emit_field("bt", bt_state())
+            emit_field("wifi", wifi_state())
+            emit_field("bat", bat_state())
+            last_slow = now
+
+        emit()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except BrokenPipeError:
+        cleanup()
+        try:
+            sys.stdout.close()
+        except Exception:
+            pass
+        os._exit(0)
+    except KeyboardInterrupt:
+        pass

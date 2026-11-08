@@ -1,0 +1,16 @@
+#!/bin/sh
+# 在带 fcitx5 输入法环境变量的情况下运行命令。
+# river 没有 niri 那样的 environment {} 块，riverctl spawn 继承的是 river
+# 自身的环境，所以凡是需要输入法的 GUI 程序都用它包一层：
+#   riverctl ... spawn '$HOME/.local/bin/ime-run bemenu-run'
+export XDG_CURRENT_DESKTOP=river
+export XDG_SESSION_DESKTOP=river
+export XDG_SESSION_TYPE=wayland
+export PATH="$HOME/.local/bin:$PATH"
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+# SDL/GLFW 在 Wayland 下走 text-input；如遇 XWayland GLFW 程序再设 GLFW_IM_MODULE=ibus
+
+exec "$@"

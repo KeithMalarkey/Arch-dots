@@ -1,0 +1,21 @@
+#!/bin/sh
+# ~/.local/bin/dam-bt
+# 点击 dam 的蓝牙模块时调用：列出已知设备，连接/断开选中的设备。
+
+if ! bluetoothctl show 2>/dev/null | grep -q 'Powered: yes'; then
+	bluetoothctl power on >/dev/null 2>&1 || exit 1
+fi
+
+devices=$(bluetoothctl devices 2>/dev/null | sed 's/^Device //')
+[ -n "$devices" ] || exit 0
+
+sel=$(printf '%s\n' "$devices" | fuzzel --dmenu -p "Bluetooth")
+[ -n "$sel" ] || exit 0
+
+mac=${sel%% *}
+
+if bluetoothctl info "$mac" 2>/dev/null | grep -q 'Connected: yes'; then
+	bluetoothctl disconnect "$mac" >/dev/null 2>&1
+else
+	bluetoothctl connect "$mac" >/dev/null 2>&1
+fi
